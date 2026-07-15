@@ -4,7 +4,7 @@
 ブラウザ上ですぐに遊ぶことができます！
 
 ## 🎮 プレイはこちらから
-👉 **[ここにあなたのGitHub PagesのURLを貼る]**
+👉 **[(https://sah1r0.github.io/one-stroke-puzzle/)]**
 
 ---
 
