@@ -1,0 +1,224 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f5f5f5;
+    font-family: sans-serif;
+}
+
+h1 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+#control-panel {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+#control-panel select {
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+#message {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    height: 25px;
+    transition: color 0.3s ease;
+}
+
+/* ゲーム盤面とCanvasを重ねる親要素 */
+#game-container {
+    position: relative;
+    width: var(--board-size, 220px);
+    height: var(--board-size, 220px);
+    border: 3px solid #333;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-sizing: content-box;
+}
+
+/* 盤面全体の親コンテナ */
+#puzzle-board {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: 1;
+}
+
+/* 描画用キャンバス */
+#path-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* 盤面を構成するセル共通のスタイル */
+#puzzle-board > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+/* タイル（数字がのるメインマス） */
+.tile {
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+    font-size: 22px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s, transform 0.1s;
+    user-select: none;
+}
+
+.tile:hover {
+    background-color: #2980b9;
+}
+
+.tile:active {
+    transform: scale(0.95);
+}
+
+/* 空きスペース */
+.empty-space {
+    background-color: #bdc3c7;
+    border-radius: 4px;
+}
+
+/* 固定壁 */
+.wall {
+    background-color: #333;
+}
+
+/* 開通している通路 */
+.empty {
+    background-color: #fff;
+}
+
+/* ボタン共通のスタイル */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.reset-btn {
+    margin-top: 20px;
+    background-color: #e74c3c;
+    color: white;
+}
+
+.reset-btn:hover {
+    background-color: #c0392b;
+}
+
+/* --- クリア用ミニウィンドウ（モーダル）のCSS --- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    position: relative; /* ×ボタンの絶対配置の基準にするため */
+    background-color: white;
+    padding: 40px 30px 30px 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: popIn 0.3s ease-out;
+    min-width: 280px;
+}
+
+/* ×（閉じる）ボタンのスタイル */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    transition: color 0.2s;
+    user-select: none;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.modal-content h2 {
+    margin: 0 0 10px 0;
+    color: #2ecc71;
+    font-size: 28px;
+}
+
+.modal-content p {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #555;
+}
+
+/* スコア表示ボード */
+#score-board {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+#score-board p {
+    margin: 5px 0;
+    font-size: 15px;
+    color: #333;
+}
+
+.score-val {
+    font-weight: bold;
+    font-size: 18px;
+    color: #e74c3c;
+}
+
+.modal-btn {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.modal-btn:hover {
+    background-color: #27ae60;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
