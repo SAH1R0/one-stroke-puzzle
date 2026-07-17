@@ -17,6 +17,7 @@
             <option value="3">3 × 3 (壁1個)</option>
             <option value="4">4 × 4 (壁2個)</option>
             <option value="5">5 × 5 (壁3個)</option>
+            <option value="6">6 × 6 (壁4個)</option> <!-- 6x6を追加！ -->
         </select>
     </div>
 
@@ -28,12 +29,15 @@
         <canvas id="path-canvas"></canvas>
     </div>
 
-    <button onclick="initGame()" class="reset-btn">リセット・再生成</button>
+    <!-- ボタンを2つに分割 -->
+    <div class="button-group">
+        <button onclick="resetCurrentGame()" class="reset-btn">リセット</button>
+        <button onclick="initGame()" class="regenerate-btn">再生成</button>
+    </div>
 
     <!-- クリア時に表示するミニウィンドウ（モーダル） -->
     <div id="clear-modal" class="modal">
         <div class="modal-content">
-            <!-- 右上の閉じる(×)ボタン -->
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h2>🎉 CLEAR!</h2>
             <p id="clear-message">見事に一筆書きが開通しました！</p>

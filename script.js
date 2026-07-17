@@ -13,7 +13,13 @@ let gameState = {
     
     // スコア計測用の状態
     startTime: null,    // 開始時間
-    clickCount: 0       // タイルをクリックした回数
+    clickCount: 0,      // タイルをクリックした回数
+
+    solvedPath: [],     // 正解ルートの座標リスト
+
+    // 【新機能】同じ盤面でリセットするための初期配置保存用
+    initialGrid: [],
+    initialEmptyTilePos: {r: 0, c: 0}
 };
 
 /**
@@ -25,18 +31,16 @@ function changeSize(newSize) {
 }
 
 /**
- * ゲームの初期化
+ * 新規ゲームの初期化（新しい壁・新しいルートを生成）
  */
 function initGame() {
     gameState.isCleared = false;
     DIM = currentN * 2 - 1;
     totalTiles = currentN * currentN - 1;
 
-    // クリック回数と時間の初期化
     gameState.clickCount = 0;
-    gameState.startTime = Date.now(); // ゲーム開始時のタイムスタンプを保存
+    gameState.startTime = Date.now(); 
 
-    // メッセージの更新
     const msgElement = document.getElementById('message');
     if (msgElement) {
         msgElement.textContent = `1から${totalTiles}を通路で繋げよう！`;
@@ -46,14 +50,52 @@ function initGame() {
     const modal = document.getElementById('clear-modal');
     if (modal) modal.style.display = 'none';
 
-    // 盤面サイズに応じてCSS変数やCSSグリッド定義を動的にセット
     setupBoardDimensions();
 
-    // 盤面生成＆シャッフル
-    generateLevel();
+    // 盤面生成
+    generateLevelFast();
     shuffleBoard();
+
+    // 【新機能】シャッフル完了直後の初期状態をディープコピーして記憶
+    saveInitialState();
+
     renderBoard();
     clearCanvas();
+}
+
+/**
+ * 【新機能】同じ盤面で最初からリセット
+ */
+function resetCurrentGame() {
+    if (gameState.initialGrid.length === 0) return;
+
+    gameState.isCleared = false;
+    gameState.clickCount = 0;
+    gameState.startTime = Date.now(); // タイマーも再スタート
+
+    const msgElement = document.getElementById('message');
+    if (msgElement) {
+        msgElement.textContent = `1から${totalTiles}を通路で繋げよう！`;
+        msgElement.style.color = "#333";
+    }
+
+    const modal = document.getElementById('clear-modal');
+    if (modal) modal.style.display = 'none';
+
+    // 記憶しておいた初期状態を復元
+    gameState.grid = JSON.parse(JSON.stringify(gameState.initialGrid));
+    gameState.emptyTilePos = { ...gameState.initialEmptyTilePos };
+
+    renderBoard();
+    clearCanvas();
+}
+
+/**
+ * 現在のシャッフル直後の状態を「初期状態」として保存
+ */
+function saveInitialState() {
+    gameState.initialGrid = JSON.parse(JSON.stringify(gameState.grid));
+    gameState.initialEmptyTilePos = { ...gameState.emptyTilePos };
 }
 
 /**
@@ -64,11 +106,24 @@ function setupBoardDimensions() {
     const container = document.getElementById('game-container');
     if (!boardElement || !container) return;
 
-    const tilePx = 60;
-    const pathPx = 20;
+    // 6x6でも画面に収まりやすいよう、サイズに合わせて1マスの大きさを調整
+    let tilePx = 60;
+    let pathPx = 20;
+    let fontSize = "22px";
+
+    if (currentN === 5) {
+        tilePx = 50;
+        pathPx = 15;
+        fontSize = "18px";
+    } else if (currentN === 6) {
+        tilePx = 42;
+        pathPx = 12;
+        fontSize = "14px";
+    }
 
     const totalPx = currentN * tilePx + (currentN - 1) * pathPx;
     container.style.setProperty('--board-size', `${totalPx}px`);
+    container.style.setProperty('--font-size', fontSize);
 
     let gridTemplate = [];
     for (let i = 0; i < DIM; i++) {
@@ -88,101 +143,124 @@ function setupBoardDimensions() {
 }
 
 /**
- * 理論上クリア可能な「壁の位置（N - 2 個）」をランダムに選んで盤面を作成
+ * 絶対固まらない超軽量生成アルゴリズム
  */
-function generateLevel() {
-    const wallCount = currentN - 2; 
-    let success = false;
+function generateLevelFast() {
+    const targetLength = currentN * currentN - 1; 
+    let path = null;
 
-    while (!success) {
-        gameState.grid = Array.from({ length: DIM }, () => 
-            Array.from({ length: DIM }, () => ({ type: 'empty' }))
-        );
+    gameState.grid = Array.from({ length: DIM }, () => 
+        Array.from({ length: DIM }, () => ({ type: 'empty' }))
+    );
 
-        let num = 1;
+    while (!path) {
+        let starts = [];
         for (let r = 0; r < DIM; r += 2) {
             for (let c = 0; c < DIM; c += 2) {
-                if (r === (DIM - 1) && c === (DIM - 1)) {
-                    gameState.grid[r][c] = { type: 'empty_space' };
-                    gameState.emptyTilePos = { r, c };
-                } else {
-                    gameState.grid[r][c] = { type: 'tile', number: num++ };
+                starts.push({ r, c });
+            }
+        }
+        starts.sort(() => Math.random() - 0.5);
+
+        for (let start of starts) {
+            path = generateRandomWalkPath(start.r, start.c, targetLength);
+            if (path) break;
+        }
+    }
+
+    gameState.solvedPath = path;
+
+    for (let i = 0; i < path.length; i++) {
+        const p = path[i];
+        gameState.grid[p.r][p.c] = { type: 'tile', number: i + 1 };
+    }
+
+    let pathEdges = new Set();
+    for (let i = 0; i < path.length - 1; i++) {
+        let p1 = path[i];
+        let p2 = path[i + 1];
+        let midR = (p1.r + p2.r) / 2;
+        let midC = (p1.c + p2.c) / 2;
+        gameState.grid[midR][midC] = { type: 'empty' };
+        pathEdges.add(`${midR},${midC}`);
+    }
+
+    let visitedSet = new Set(path.map(p => `${p.r},${p.c}`));
+    let emptySpacePos = null;
+    for (let r = 0; r < DIM; r += 2) {
+        for (let c = 0; c < DIM; c += 2) {
+            if (!visitedSet.has(`${r},${c}`)) {
+                emptySpacePos = { r, c };
+                break;
+            }
+        }
+    }
+    gameState.grid[emptySpacePos.r][emptySpacePos.c] = { type: 'empty_space' };
+    gameState.emptyTilePos = emptySpacePos;
+
+    let unusedEdges = [];
+    for (let r = 0; r < DIM; r++) {
+        for (let c = 0; c < DIM; c++) {
+            if ((r % 2 === 0 && c % 2 !== 0) || (r % 2 !== 0 && c % 2 === 0)) {
+                if (!pathEdges.has(`${r},${c}`)) {
+                    unusedEdges.push({ r, c });
                 }
             }
         }
+    }
 
-        let allWallCandidates = [];
-        for (let r = 0; r < DIM; r++) {
-            for (let c = 0; c < DIM; c++) {
-                if ((r % 2 === 0 && c % 2 !== 0) || (r % 2 !== 0 && c % 2 === 0)) {
-                    allWallCandidates.push({ r, c });
-                }
-            }
-        }
+    const wallCount = currentN - 2;
+    unusedEdges.sort(() => Math.random() - 0.5);
+    gameState.wallPositions = unusedEdges.slice(0, wallCount);
 
-        allWallCandidates.sort(() => Math.random() - 0.5);
-        gameState.wallPositions = allWallCandidates.slice(0, wallCount);
-
-        for (let wall of gameState.wallPositions) {
-            gameState.grid[wall.r][wall.c] = { type: 'wall' };
-        }
-
-        if (hasAtLeastOneValidPathWithTheseWalls()) {
-            success = true;
-        }
+    for (let wall of gameState.wallPositions) {
+        gameState.grid[wall.r][wall.c] = { type: 'wall' };
     }
 }
 
 /**
- * 壁を検証するDFS
+ * 指定された長さのランダム一筆書きパスを生成する高速DFS
  */
-function hasAtLeastOneValidPathWithTheseWalls() {
-    let pathFound = false;
+function generateRandomWalkPath(startR, startC, targetLength) {
+    let visited = new Set();
+    let resultPath = null;
 
-    function search(r, c, visitedCount) {
-        if (pathFound) return;
-        if (visitedCount === (currentN * currentN - 1)) {
-            pathFound = true;
+    function search(r, c, path) {
+        if (resultPath) return; 
+        if (path.length === targetLength) {
+            resultPath = [...path];
             return;
         }
 
         const directions = [[0, 2], [0, -2], [2, 0], [-2, 0]];
+        directions.sort(() => Math.random() - 0.5);
+
         for (let [dr, dc] of directions) {
             let nr = r + dr;
             let nc = c + dc;
-            let midR = r + dr / 2;
-            let midC = c + dc / 2;
-
             if (nr >= 0 && nr < DIM && nc >= 0 && nc < DIM) {
                 let key = `${nr},${nc}`;
-                if (!visited.has(key) && gameState.grid[midR][midC].type !== 'wall') {
+                if (!visited.has(key)) {
                     visited.add(key);
-                    search(nr, nc, visitedCount + 1);
+                    path.push({ r: nr, c: nc });
+                    search(nr, nc, path);
+                    path.pop();
                     visited.delete(key);
                 }
             }
         }
     }
 
-    let visited = new Set();
-    for (let startR = 0; startR < DIM; startR += 2) {
-        for (let startC = 0; startC < DIM; startC += 2) {
-            let key = `${startR},${startC}`;
-            visited.add(key);
-            search(startR, startC, 1);
-            visited.delete(key);
-            if (pathFound) return true;
-        }
-    }
-
-    return false;
+    visited.add(`${startR},${startC}`);
+    search(startR, startC, [{ r: startR, c: startC }]);
+    return resultPath;
 }
 
 /**
- * 完成された状態からスライドを繰り返してシャッフル
+ * ゴール状態からスライドを繰り返してシャッフル
  */
 function shuffleBoard() {
-    const shuffleSteps = currentN * 35; 
+    const shuffleSteps = currentN * 50; // 6x6用にも少し多めに設定
     let steps = 0;
 
     while (steps < shuffleSteps) {
@@ -263,7 +341,6 @@ function tryMoveTile(r, c) {
             return; 
         }
 
-        // 移動に成功したらクリックカウントを加算
         gameState.clickCount++;
 
         const temp = gameState.grid[r][c];
@@ -278,7 +355,7 @@ function tryMoveTile(r, c) {
 }
 
 /**
- * 一筆書き判定
+ * 1から順に最後まで正しく一筆書きができているかチェック
  */
 function checkPerfectPath() {
     let tilePositions = {};
@@ -325,7 +402,6 @@ function checkWinCondition() {
     if (perfectPath) {
         gameState.isCleared = true;
         
-        // 1. 赤い一筆書きの線を描画
         drawPath(perfectPath);
 
         const msgElement = document.getElementById('message');
@@ -336,15 +412,12 @@ function checkWinCondition() {
         
         renderBoard();
 
-        // 2. クリア時間（秒数）を計算
         const endTime = Date.now();
         const clearTimeSeconds = Math.floor((endTime - gameState.startTime) / 1000);
 
-        // スコアをモーダルに代入
         document.getElementById('clear-time').textContent = clearTimeSeconds;
         document.getElementById('click-count').textContent = gameState.clickCount;
 
-        // 3. モーダルを表示
         setTimeout(() => {
             const clearMsg = document.getElementById('clear-message');
             if (clearMsg) {
@@ -397,17 +470,11 @@ function drawPath(path) {
     ctx.stroke();
 }
 
-/**
- * モーダルを閉じるだけ（クリア盤面をじっくり見る用）
- */
 function closeModal() {
     const modal = document.getElementById('clear-modal');
     if (modal) modal.style.display = 'none';
 }
 
-/**
- * モーダルを閉じて最初からリセット・再生成
- */
 function closeModalAndReset() {
     closeModal();
     initGame();
