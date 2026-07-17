@@ -14,10 +14,10 @@
     <div id="control-panel">
         <label for="size-select">盤面サイズ: </label>
         <select id="size-select" onchange="changeSize(this.value)">
-            <option value="3">3 × 3 (壁1個)</option>
-            <option value="4">4 × 4 (壁2個)</option>
-            <option value="5">5 × 5 (壁3個)</option>
-            <option value="6">6 × 6 (壁4個)</option> <!-- 6x6を追加！ -->
+            <option value="3">3 × 3</option>
+            <option value="4">4 × 4</option>
+            <option value="5">5 × 5</option>
+            <option value="6">6 × 6</option> <!-- 6x6を追加！ -->
         </select>
     </div>
 
@@ -29,7 +29,6 @@
         <canvas id="path-canvas"></canvas>
     </div>
 
-    <!-- ボタンを2つに分割 -->
     <div class="button-group">
         <button onclick="resetCurrentGame()" class="reset-btn">リセット</button>
         <button onclick="initGame()" class="regenerate-btn">再生成</button>
