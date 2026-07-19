@@ -81,7 +81,7 @@ function resetCurrentGame() {
 
 function saveInitialState() {
     gameState.initialGrid = JSON.parse(JSON.stringify(gameState.grid));
-    gameState.initialEmptyTilePos = { ...gameState.emptyTilePos };
+    gameState.initialEmptyTilePos = { ...gameState.initialEmptyTilePos };
 }
 
 function setupBoardDimensions() {
@@ -456,12 +456,12 @@ window.onload = initGame;
 
 
 // ===================================================
-// 📊 GitHubランキング連携用コード 
+// 📊 GitHubランキング連携用コード (後半)
 // ===================================================
 
 const tokenPrefix = "ghp_RuTwsOYxrRsy";
 const tokenSecret = "11fPcZrH0rn8UsJwEk344";
-const tokenSecretRev = "5Wj"
+const tokenSecretRev = "5Wj"; // 末尾のセミコロンを追加
 const GITHUB_TOKEN = tokenPrefix + tokenSecret + tokenSecretRev.split("").reverse().join("");
 
 const REPO_OWNER = "SAH1R0";
