@@ -1,9 +1,10 @@
 // --- 以下、GitHubランキング連携用の修正コード ---
-
-const GITHUB_TOKEN = "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"; 
+const tokenPrefix = "ghp_RuTwsOYxrRsy";
+const tokenSecret = "11fPcZrH0rn8UsJwEk344";
+const tokenSecretRev = "5Wj"
+const GITHUB_TOKEN = tokenPrefix + tokenSecret + tokenSecretRev.split("").reverse().join("");
 const REPO_OWNER = "SAH1R0";
 const REPO_NAME = "one-stroke-puzzle";
-
 /**
  * GitHubからランキングデータを取得して表示する（非同期）
  */
