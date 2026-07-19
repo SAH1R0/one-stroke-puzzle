@@ -10,20 +10,20 @@
 
     <h1>一筆書きスライドパズル</h1>
     
-    <!-- サイズ選択エリア -->
+    <!-- サイズ選択とランキング確認ボタン -->
     <div id="control-panel">
         <label for="size-select">盤面サイズ: </label>
         <select id="size-select" onchange="changeSize(this.value)">
             <option value="3">3 × 3</option>
             <option value="4">4 × 4</option>
             <option value="5">5 × 5</option>
-            <option value="6">6 × 6</option> <!-- 6x6を追加！ -->
+            <option value="6">6 × 6</option>
         </select>
+        <button onclick="openRankingModal()" class="view-ranking-btn">🏆 ランキングを見る</button>
     </div>
 
     <div id="message">1から8を通路で繋げよう！</div>
     
-    <!-- 盤面と描画用のCanvasを重ねるためのラッパー -->
     <div id="game-container">
         <div id="puzzle-board"></div>
         <canvas id="path-canvas"></canvas>
@@ -34,20 +34,44 @@
         <button onclick="initGame()" class="regenerate-btn">再生成</button>
     </div>
 
-    <!-- クリア時に表示するミニウィンドウ（モーダル） -->
+    <!-- クリア時に表示するミニウィンドウ（名前登録あり） -->
     <div id="clear-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="closeModal('clear-modal')">&times;</span>
             <h2>🎉 CLEAR!</h2>
             <p id="clear-message">見事に一筆書きが開通しました！</p>
             
-            <!-- スコア表示エリア -->
             <div id="score-board">
                 <p>クリア時間: <span id="clear-time" class="score-val">0</span> 秒</p>
                 <p>クリック回数: <span id="click-count" class="score-val">0</span> 回</p>
             </div>
 
+            <div id="register-zone">
+                <input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+                <button onclick="registerScore()" class="register-btn">ランキングに登録</button>
+            </div>
+
+            <div class="ranking-box">
+                <h3>トップスコア (同サイズ)</h3>
+                <ol class="ranking-list-clear"></ol>
+            </div>
+
             <button onclick="closeModalAndReset()" class="modal-btn">もう一度遊ぶ</button>
+        </div>
+    </div>
+
+    <!-- いつでも閲覧できるランキング専用モーダル -->
+    <div id="ranking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('ranking-modal')">&times;</span>
+            <h2 style="color: #d35400; margin-bottom: 5px;"> TOP 10 RANKING</h2>
+            <p id="ranking-title-size" style="font-weight: bold; color: #555; font-size: 16px; margin: 0 0 15px 0;"></p>
+            
+            <div class="ranking-box-view">
+                <ol id="ranking-list-view"></ol>
+            </div>
+            
+            <button onclick="closeModal('ranking-modal')" class="modal-btn close-modal-btn">閉じる</button>
         </div>
     </div>
 

@@ -1,38 +1,30 @@
-let currentN = 3; // 選択中の盤面サイズ N
-let DIM = 5;      // グリッド次元 (N * 2 - 1)
-let totalTiles = 8; // タイル数 (N * N - 1)
+let currentN = 3; 
+let DIM = 5;      
+let totalTiles = 8; 
 
-// Canvas上の描画用中心座標を管理する配列
 let cellCenters = [];
 
 let gameState = {
     grid: [],
-    wallPositions: [],  // 固定壁たちの座標リスト [{r, c}, ...]
+    wallPositions: [],  
     emptyTilePos: {r: 0, c: 0}, 
     isCleared: false,
     
-    // スコア計測用の状態
-    startTime: null,    // 開始時間
-    clickCount: 0,      // タイルをクリックした回数
+    startTime: null,    
+    clickCount: 0,      
+    clearTime: 0,       
 
-    solvedPath: [],     // 正解ルートの座標リスト
+    solvedPath: [],     
 
-    // 【新機能】同じ盤面でリセットするための初期配置保存用
     initialGrid: [],
     initialEmptyTilePos: {r: 0, c: 0}
 };
 
-/**
- * サイズ変更時のトリガー
- */
 function changeSize(newSize) {
     currentN = parseInt(newSize, 10);
     initGame();
 }
 
-/**
- * 新規ゲームの初期化（新しい壁・新しいルートを生成）
- */
 function initGame() {
     gameState.isCleared = false;
     DIM = currentN * 2 - 1;
@@ -47,31 +39,26 @@ function initGame() {
         msgElement.style.color = "#333";
     }
 
-    const modal = document.getElementById('clear-modal');
-    if (modal) modal.style.display = 'none';
+    closeModal('clear-modal');
+    closeModal('ranking-modal');
+
+    const regZone = document.getElementById('register-zone');
+    if (regZone) regZone.style.display = 'flex';
 
     setupBoardDimensions();
-
-    // 盤面生成
     generateLevelFast();
     shuffleBoard();
-
-    // 【新機能】シャッフル完了直後の初期状態をディープコピーして記憶
     saveInitialState();
-
     renderBoard();
     clearCanvas();
 }
 
-/**
- * 【新機能】同じ盤面で最初からリセット
- */
 function resetCurrentGame() {
     if (gameState.initialGrid.length === 0) return;
 
     gameState.isCleared = false;
     gameState.clickCount = 0;
-    gameState.startTime = Date.now(); // タイマーも再スタート
+    gameState.startTime = Date.now(); 
 
     const msgElement = document.getElementById('message');
     if (msgElement) {
@@ -79,10 +66,12 @@ function resetCurrentGame() {
         msgElement.style.color = "#333";
     }
 
-    const modal = document.getElementById('clear-modal');
-    if (modal) modal.style.display = 'none';
+    closeModal('clear-modal');
+    closeModal('ranking-modal');
 
-    // 記憶しておいた初期状態を復元
+    const regZone = document.getElementById('register-zone');
+    if (regZone) regZone.style.display = 'flex';
+
     gameState.grid = JSON.parse(JSON.stringify(gameState.initialGrid));
     gameState.emptyTilePos = { ...gameState.initialEmptyTilePos };
 
@@ -90,23 +79,16 @@ function resetCurrentGame() {
     clearCanvas();
 }
 
-/**
- * 現在のシャッフル直後の状態を「初期状態」として保存
- */
 function saveInitialState() {
     gameState.initialGrid = JSON.parse(JSON.stringify(gameState.grid));
     gameState.initialEmptyTilePos = { ...gameState.emptyTilePos };
 }
 
-/**
- * 盤面のピクセルサイズやグリッド定義を計算
- */
 function setupBoardDimensions() {
     const boardElement = document.getElementById('puzzle-board');
     const container = document.getElementById('game-container');
     if (!boardElement || !container) return;
 
-    // 6x6でも画面に収まりやすいよう、サイズに合わせて1マスの大きさを調整
     let tilePx = 60;
     let pathPx = 20;
     let fontSize = "22px";
@@ -142,9 +124,6 @@ function setupBoardDimensions() {
     }
 }
 
-/**
- * 絶対固まらない超軽量生成アルゴリズム
- */
 function generateLevelFast() {
     const targetLength = currentN * currentN - 1; 
     let path = null;
@@ -218,9 +197,6 @@ function generateLevelFast() {
     }
 }
 
-/**
- * 指定された長さのランダム一筆書きパスを生成する高速DFS
- */
 function generateRandomWalkPath(startR, startC, targetLength) {
     let visited = new Set();
     let resultPath = null;
@@ -256,11 +232,8 @@ function generateRandomWalkPath(startR, startC, targetLength) {
     return resultPath;
 }
 
-/**
- * ゴール状態からスライドを繰り返してシャッフル
- */
 function shuffleBoard() {
-    const shuffleSteps = currentN * 50; // 6x6用にも少し多めに設定
+    const shuffleSteps = currentN * 50; 
     let steps = 0;
 
     while (steps < shuffleSteps) {
@@ -354,9 +327,6 @@ function tryMoveTile(r, c) {
     }
 }
 
-/**
- * 1から順に最後まで正しく一筆書きができているかチェック
- */
 function checkPerfectPath() {
     let tilePositions = {};
     for (let r = 0; r < DIM; r += 2) {
@@ -413,10 +383,12 @@ function checkWinCondition() {
         renderBoard();
 
         const endTime = Date.now();
-        const clearTimeSeconds = Math.floor((endTime - gameState.startTime) / 1000);
+        gameState.clearTime = Math.floor((endTime - gameState.startTime) / 1000);
 
-        document.getElementById('clear-time').textContent = clearTimeSeconds;
+        document.getElementById('clear-time').textContent = gameState.clearTime;
         document.getElementById('click-count').textContent = gameState.clickCount;
+
+        showRanking();
 
         setTimeout(() => {
             const clearMsg = document.getElementById('clear-message');
@@ -427,8 +399,85 @@ function checkWinCondition() {
             if (modal) {
                 modal.style.display = 'flex';
             }
-        }, 500);
+        }, 600);
     }
+}
+
+/**
+ * ランキングデータを取得して表示を更新する
+ */
+function showRanking() {
+    const clearList = document.querySelector('.ranking-list-clear');
+    const viewList = document.getElementById('ranking-list-view');
+    const rankings = JSON.parse(localStorage.getItem(`ranking_${currentN}`)) || [];
+
+    // データが1件もない場合の表示
+    if (rankings.length === 0) {
+        const noRecordHtml = '<li class="no-record">まだ記録がありません。<br>クリアして最初の記録を刻もう！ 🚀</li>';
+        if (clearList) clearList.innerHTML = noRecordHtml;
+        if (viewList) viewList.innerHTML = noRecordHtml;
+        return;
+    }
+
+    // データがある場合の表示生成
+    const htmlContent = rankings.map((score, index) => {
+        let crown = "";
+        if (index === 0) crown = "🥇 ";
+        else if (index === 1) crown = "🥈 ";
+        else if (index === 2) crown = "🥉 ";
+        return `<li>${crown}<strong>${score.name}</strong> - ${score.clicks}手 / ${score.time}秒</li>`;
+    }).join('');
+
+    if (clearList) clearList.innerHTML = htmlContent;
+    if (viewList) viewList.innerHTML = htmlContent;
+}
+
+/**
+ * いつでもランキングモーダルを開く
+ */
+function openRankingModal() {
+    const title = document.getElementById('ranking-title-size');
+    if (title) {
+        title.textContent = `📊 【${currentN} × ${currentN} モード】のトップ10`;
+    }
+    showRanking(); // データを取得して描画
+    const modal = document.getElementById('ranking-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function registerScore() {
+    const nameInput = document.getElementById('player-name');
+    if (!nameInput) return;
+
+    const name = nameInput.value.trim() || "名無しさん";
+    const newRecord = {
+        name: name,
+        clicks: gameState.clickCount,
+        time: gameState.clearTime,
+        date: new Date().toLocaleDateString()
+    };
+
+    let rankings = JSON.parse(localStorage.getItem(`ranking_${currentN}`)) || [];
+    rankings.push(newRecord);
+
+    rankings.sort((a, b) => {
+        if (a.clicks !== b.clicks) {
+            return a.clicks - b.clicks;
+        }
+        return a.time - b.time;
+    });
+
+    rankings = rankings.slice(0, 10);
+
+    localStorage.setItem(`ranking_${currentN}`, JSON.stringify(rankings));
+
+    const registerZone = document.getElementById('register-zone');
+    if (registerZone) {
+        registerZone.style.display = 'none';
+    }
+
+    nameInput.value = '';
+    showRanking();
 }
 
 function clearCanvas() {
@@ -470,13 +519,13 @@ function drawPath(path) {
     ctx.stroke();
 }
 
-function closeModal() {
-    const modal = document.getElementById('clear-modal');
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
 }
 
 function closeModalAndReset() {
-    closeModal();
+    closeModal('clear-modal');
     initGame();
 }
 

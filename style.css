@@ -36,19 +36,17 @@ h1 {
     transition: color 0.3s ease;
 }
 
-/* ゲーム盤面とCanvasを重ねる親要素 */
 #game-container {
     position: relative;
     width: var(--board-size, 220px);
     height: var(--board-size, 220px);
-    max-width: 90vw;  /* スマホはみ出し防止 */
-    max-height: 90vw; /* スマホはみ出し防止 */
+    max-width: 90vw;
+    max-height: 90vw;
     border: 3px solid #333;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     box-sizing: content-box;
 }
 
-/* 盤面全体の親コンテナ */
 #puzzle-board {
     position: absolute;
     top: 0;
@@ -60,7 +58,6 @@ h1 {
     z-index: 1;
 }
 
-/* 描画用キャンバス */
 #path-canvas {
     position: absolute;
     top: 0;
@@ -71,7 +68,6 @@ h1 {
     pointer-events: none;
 }
 
-/* 盤面を構成するセル共通のスタイル */
 #puzzle-board > div {
     display: flex;
     align-items: center;
@@ -79,12 +75,11 @@ h1 {
     box-sizing: border-box;
 }
 
-/* タイル（数字がのるメインマス） */
 .tile {
     background-color: #3498db;
     color: white;
     font-weight: bold;
-    font-size: var(--font-size, 22px); /* サイズに合わせてフォントサイズを可変に */
+    font-size: var(--font-size, 22px);
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.2s, transform 0.1s;
@@ -101,7 +96,6 @@ h1 {
     transform: scale(0.95);
 }
 
-/* 空きスペース */
 .empty-space {
     background-color: #bdc3c7;
     border-radius: 4px;
@@ -109,21 +103,18 @@ h1 {
     height: 100%;
 }
 
-/* 固定壁 */
 .wall {
     background-color: #333;
     width: 100%;
     height: 100%;
 }
 
-/* 開通している通路 */
 .empty {
     background-color: #fff;
     width: 100%;
     height: 100%;
 }
 
-/* ボタンのレイアウト */
 .button-group {
     display: flex;
     gap: 10px;
@@ -158,7 +149,7 @@ button {
     background-color: #c0392b;
 }
 
-/* --- クリア用ミニウィンドウ（モーダル）のCSS --- */
+/* --- 【修正】クリア盤面が見えるようにモーダルを横にずらす配置 --- */
 .modal {
     display: none;
     position: fixed;
@@ -166,7 +157,7 @@ button {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.3); /* 背景の暗度を少し下げて盤面を見やすく */
     justify-content: center;
     align-items: center;
     z-index: 100;
@@ -175,72 +166,201 @@ button {
 .modal-content {
     position: relative;
     background-color: white;
-    padding: 40px 30px 30px 30px;
+    padding: 30px;
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     animation: popIn 0.3s ease-out;
-    min-width: 280px;
+    width: 320px;
+    max-height: 85vh;
+    overflow-y: auto; /* 縦長になってもスクロール可能に */
+    
+    /* パズル盤面と被らないよう、PC等の大画面では少し右側に寄せる */
+    margin-left: 20px;
+}
+
+/* 画面が狭いスマホ用の調整 */
+@media (max-width: 768px) {
+    body {
+        justify-content: flex-start;
+        padding-top: 20px;
+        height: auto;
+    }
+    .modal-content {
+        margin-left: 0;
+        width: 85vw;
+    }
 }
 
 .close-btn {
     position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
+    top: 5px;
+    right: 12px;
+    font-size: 24px;
     font-weight: bold;
     color: #aaa;
     cursor: pointer;
-    transition: color 0.2s;
-    user-select: none;
-}
-
-.close-btn:hover {
-    color: #333;
 }
 
 .modal-content h2 {
-    margin: 0 0 10px 0;
+    margin: 0 0 5px 0;
     color: #2ecc71;
-    font-size: 28px;
-}
-
-.modal-content p {
-    margin: 0 0 15px 0;
-    font-size: 16px;
-    color: #555;
+    font-size: 26px;
 }
 
 #score-board {
     background-color: #f9f9f9;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 20px;
+    padding: 8px;
+    margin-bottom: 15px;
 }
 
 #score-board p {
-    margin: 5px 0;
-    font-size: 15px;
-    color: #333;
+    margin: 3px 0;
+    font-size: 14px;
 }
 
 .score-val {
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     color: #e74c3c;
+}
+
+/* ランキング登録フォームのスタイル */
+#register-zone {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+#player-name {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 140px;
+}
+
+.register-btn {
+    background-color: #3498db;
+    color: white;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.register-btn:hover {
+    background-color: #2980b9;
+}
+
+/* ランキング表のスタイル */
+#ranking-box {
+    background-color: #fffde7;
+    border: 1px solid #fff59d;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+#ranking-box h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #f57f17;
+    text-align: center;
+}
+
+#ranking-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.6;
 }
 
 .modal-btn {
     background-color: #2ecc71;
     color: white;
-}
-
-.modal-btn:hover {
-    background-color: #27ae60;
+    width: 100%;
+    padding: 12px;
 }
 
 @keyframes popIn {
     0% { transform: scale(0.8); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
+}
+/* --- いつでもランキングを見るボタンのスタイル --- */
+.view-ranking-btn {
+    background-color: #f1c40f;
+    color: #333;
+    padding: 5px 12px;
+    font-size: 14px;
+    margin-left: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.view-ranking-btn:hover {
+    background-color: #f39c12;
+    color: white;
+}
+
+/* 共通のランキングボックス（クリア用・閲覧用共通） */
+.ranking-box {
+    background-color: #fffde7;
+    border: 1px solid #fff59d;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.ranking-box h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #f57f17;
+    text-align: center;
+}
+/* --- ランキング閲覧用モーダルの専用デザイン --- */
+.ranking-box-view {
+    background-color: #fcf8e3;
+    border: 2px solid #fbeed5;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+#ranking-list-view {
+    margin: 0;
+    padding-left: 20px;
+    color: #c0392b;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 2;
+}
+
+#ranking-list-view li {
+    color: #333;
+    font-weight: normal;
+    border-bottom: 1px dashed #ddd;
+    padding: 4px 0;
+}
+
+#ranking-list-view .no-record {
+    list-style: none;
+    padding-left: 0;
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.close-modal-btn {
+    background-color: #7f8c8d !important;
+    color: white !important;
+}
+.close-modal-btn:hover {
+    background-color: #95a5a6 !important;
 }
