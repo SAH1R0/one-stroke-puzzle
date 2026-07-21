@@ -42,8 +42,13 @@ function initGame() {
     closeModal('clear-modal');
     closeModal('ranking-modal');
 
+    // 次回クリア用にフォームを再構築・表示
     const regZone = document.getElementById('register-zone');
-    if (regZone) regZone.style.display = 'flex';
+    if (regZone) {
+        regZone.innerHTML = `<input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+                              <button onclick="registerScore()" class="register-btn">ランキングに登録</button>`;
+        regZone.style.display = 'flex';
+    }
 
     setupBoardDimensions();
     generateLevelFast();
@@ -69,8 +74,13 @@ function resetCurrentGame() {
     closeModal('clear-modal');
     closeModal('ranking-modal');
 
+    // 次回クリア用にフォームを再構築・表示
     const regZone = document.getElementById('register-zone');
-    if (regZone) regZone.style.display = 'flex';
+    if (regZone) {
+        regZone.innerHTML = `<input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+                              <button onclick="registerScore()" class="register-btn">ランキングに登録</button>`;
+        regZone.style.display = 'flex';
+    }
 
     gameState.grid = JSON.parse(JSON.stringify(gameState.initialGrid));
     gameState.emptyTilePos = { ...gameState.initialEmptyTilePos };
@@ -81,7 +91,7 @@ function resetCurrentGame() {
 
 function saveInitialState() {
     gameState.initialGrid = JSON.parse(JSON.stringify(gameState.grid));
-    gameState.initialEmptyTilePos = { ...gameState.initialEmptyTilePos };
+    gameState.initialEmptyTilePos = { ...gameState.emptyTilePos };
 }
 
 function setupBoardDimensions() {
@@ -456,12 +466,12 @@ window.onload = initGame;
 
 
 // ===================================================
-// 📊 GitHubランキング連携用コード (後半)
+// 📊 GitHubランキング連携用コード
 // ===================================================
 
 const tokenPrefix = "ghp_RuTwsOYxrRsy";
 const tokenSecret = "11fPcZrH0rn8UsJwEk344";
-const tokenSecretRev = "5Wj"; // 末尾のセミコロンを追加
+const tokenSecretRev = "5Wj";
 const GITHUB_TOKEN = tokenPrefix + tokenSecret + tokenSecretRev.split("").reverse().join("");
 
 const REPO_OWNER = "SAH1R0";
@@ -479,9 +489,13 @@ async function showRanking() {
     if (viewList) viewList.innerHTML = loadingHtml;
 
     try {
-        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/ranking.json`;
+        // キャッシュ回避のためタイムスタンプを付与
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/ranking.json?t=${Date.now()}`;
         const response = await fetch(url, {
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+            headers: { 
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Cache-Control': 'no-cache'
+            }
         });
 
         let rankings = [];
@@ -534,15 +548,23 @@ async function registerScore() {
     };
 
     const registerZone = document.getElementById('register-zone');
+    const originalFormHtml = `<input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
+                              <button onclick="registerScore()" class="register-btn">ランキングに登録</button>`;
+
     if (registerZone) {
         registerZone.innerHTML = '<p style="text-align:center; width:100%;">GitHubにスコアを送信中... 🚀</p>';
     }
 
     try {
+        // キャッシュ回避のためタイムスタンプを付与して最新のshaを取得
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/ranking.json`;
+        const getUrl = `${url}?t=${Date.now()}`;
         
-        const getRes = await fetch(url, {
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        const getRes = await fetch(getUrl, {
+            headers: { 
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Cache-Control': 'no-cache'
+            }
         });
 
         let allRankings = {};
@@ -582,16 +604,19 @@ async function registerScore() {
             throw new Error(`送信失敗: ${putRes.status}`);
         }
 
-        nameInput.value = '';
-        if (registerZone) registerZone.style.display = 'none';
+        // 成功時：フォームのHTMLを元に戻してから隠す
+        if (registerZone) {
+            registerZone.innerHTML = originalFormHtml;
+            registerZone.style.display = 'none';
+        }
         showRanking();
 
     } catch (error) {
         console.error("スコア登録エラー:", error);
         alert("GitHubへのスコア送信に失敗しました。");
+        // エラー時もフォームのHTMLを戻しておく
         if (registerZone) {
-            registerZone.innerHTML = `<input type="text" id="player-name" placeholder="名前を入力" maxlength="10">
-                                      <button onclick="registerScore()">登録</button>`;
+            registerZone.innerHTML = originalFormHtml;
         }
     }
 }
