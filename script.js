@@ -489,12 +489,11 @@ async function showRanking() {
     if (viewList) viewList.innerHTML = loadingHtml;
 
     try {
-        // キャッシュ回避のためタイムスタンプを付与
+        // キャッシュ回避のためURL末尾にタイムスタンプを付与
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/ranking.json?t=${Date.now()}`;
         const response = await fetch(url, {
             headers: { 
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Cache-Control': 'no-cache'
+                'Authorization': `token ${GITHUB_TOKEN}`
             }
         });
 
@@ -556,14 +555,12 @@ async function registerScore() {
     }
 
     try {
-        // キャッシュ回避のためタイムスタンプを付与して最新のshaを取得
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/ranking.json`;
         const getUrl = `${url}?t=${Date.now()}`;
         
         const getRes = await fetch(getUrl, {
             headers: { 
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Cache-Control': 'no-cache'
+                'Authorization': `token ${GITHUB_TOKEN}`
             }
         });
 
@@ -604,7 +601,6 @@ async function registerScore() {
             throw new Error(`送信失敗: ${putRes.status}`);
         }
 
-        // 成功時：フォームのHTMLを元に戻してから隠す
         if (registerZone) {
             registerZone.innerHTML = originalFormHtml;
             registerZone.style.display = 'none';
@@ -614,7 +610,6 @@ async function registerScore() {
     } catch (error) {
         console.error("スコア登録エラー:", error);
         alert("GitHubへのスコア送信に失敗しました。");
-        // エラー時もフォームのHTMLを戻しておく
         if (registerZone) {
             registerZone.innerHTML = originalFormHtml;
         }
